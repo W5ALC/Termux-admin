@@ -1,0 +1,18 @@
+Match host home exec  " [[ $(ip -o -4 addr list wlan0 | awk '{print $4}' | cut -d/ -f1) == 10.0.0.* ]] "
+        Hostname 10.0.0.98
+        Port XXXX
+	User nowhereman
+	ServerAliveInterval 60
+Host home
+        Hostname XX.XXX.XXX.X
+        Port XXXX
+        User nowhereman
+	ServerAliveInterval 60
+Host area-51
+	ProxyCommand ssh -q -W 10.0.0.40:XXXX home
+	User nowhereman
+	ServerAliveInterval 60
+Host allstarlink
+        ProxyCommand ssh -q -W 10.0.0.173:XXXX home
+        User root
+        ServerAliveInterval 60
