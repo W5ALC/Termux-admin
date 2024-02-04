@@ -30,6 +30,7 @@ This script is a versatile tool for managing remote Linux systems using Termux o
 
 ### How to Use from within Termux:
 1. Copy the script to your Termux environment, e.g. ~/.shortcuts/admin.
+ `curl -sSL "https://raw.githubusercontent.com/W5ALC/Termux-admin/main/admin" -o "~/.shortcuts/admin"`
 
 2. Make it executable: `chmod +x ~/.shortcuts/admin`
 
@@ -49,3 +50,6 @@ This script is a versatile tool for managing remote Linux systems using Termux o
 5. Follow the on-screen menu to perform desired actions on your remote Linux systems.
 
 Feel free to customize and extend the script according to your needs. Contributions and suggestions are welcome!
+
+## BONUS
+I've also added a sanitized copy of my .ssh/config as en example of a great setup. The way it's formatted I never have to worry about whether I'm connected to the wifi or to cell network it just works. 
