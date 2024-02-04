@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# Help function with here doc
+show_help() {
+cat << EOF
+This script allows you to block or unblock specified YouTube domains by modifying the /etc/hosts file.
+
+Usage:
+  - Run the script with no arguments to toggle domain access.
+  - This script requires sudo privileges to modify the hosts file.
+
+Note: Blocking YouTube domains will redirect requests to 0.0.0.0.
+
+EOF
+}
+
+youtube_domains="0.0.0.0 www.youtube.com
+0.0.0.0 youtube.com
+0.0.0.0 tv.youtube.com
+0.0.0.0 music.youtube.com
+0.0.0.0 studio.youtube.com
+0.0.0.0 m.youtube.com
+0.0.0.0 youtu.be
+0.0.0.0 www.youtu.be
+0.0.0.0 tv.youtu.be
+0.0.0.0 music.youtu.be
+0.0.0.0 studio.youtu.be
+0.0.0.0 m.youtu.be"
+
+hosts_file="/etc/hosts"
+
+toggle_youtube_domains() {
+    if grep -q "$youtube_domains" "$hosts_file"; then
+        sudo sed -i.bak '/0.0.0.0 www\.youtube\.com/d' "$hosts_file"
+        sudo sed -i.bak '/0.0.0.0 youtube\.com/d' "$hosts_file"
+        sudo sed -i.bak '/0.0.0.0 tv\.youtube\.com/d' "$hosts_file"
+        sudo sed -i.bak '/0.0.0.0 music\.youtube\.com/d' "$hosts_file"
+        sudo sed -i.bak '/0.0.0.0 studio\.youtube\.com/d' "$hosts_file"
+        sudo sed -i.bak '/0.0.0.0 m\.youtube\.com/d' "$hosts_file"
+        sudo sed -i.bak '/0.0.0.0 youtu\.be/d' "$hosts_file"
+        sudo sed -i.bak '/0.0.0.0 www\.youtu\.be/d' "$hosts_file"
+        sudo sed -i.bak '/0.0.0.0 tv\.youtu\.be/d' "$hosts_file"
+        sudo sed -i.bak '/0.0.0.0 music\.youtu\.be/d' "$hosts_file"
+        sudo sed -i.bak '/0.0.0.0 studio\.youtu\.be/d' "$hosts_file"
+        sudo sed -i.bak '/0.0.0.0 m\.youtu\.be/d' "$hosts_file"
+        echo "YouTube domain access enabled."
+    else
+        sudo bash -c "echo '$youtube_domains' >> $hosts_file"
+        echo "YouTube domain access disabled."
+    fi
+}
+
+# Check for help argument
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+    show_help
+else
+    toggle_youtube_domains
+fi
