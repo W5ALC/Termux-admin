@@ -1,0 +1,309 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# set -x
+# Define menu options
+export SHELL=/data/data/com.termux/files/usr/bin/bash
+set +o vi
+OPTIONS=(
+    "Connect to remote Fedora system"
+    "Update all installed packages"
+    "Monitor system logs"
+    "Backup important files"
+    "Adjust sound with alsamixer"
+    "Run youtube-toggle on area-51"
+    "Run sat.sh on area-51"
+    "Reboot or shutdown remote system"
+    "Exit"
+)
+
+# Define function to fetch list of remote hosts from ssh config
+function get-remote-hosts {
+    grep -iw host ~/.ssh/config | grep -v "exec" | cut -d ' ' -f 2
+}
+
+# Define function for connecting to remote system
+function connect-to-remote-system {
+    # Fetch list of available remote hosts
+    mapfile -t REMOTE_HOSTS < <(get-remote-hosts)
+
+    if [ ${#REMOTE_HOSTS[@]} -eq 0 ]; then
+        printf "No remote hosts found in ~/.ssh/config\n"
+        return 1
+    fi
+
+    printf "Select a remote host:\n"
+    select remote_host in "${REMOTE_HOSTS[@]}"; do
+        ssh "$remote_host"
+        break
+    done
+}
+
+# Define function for updating all installed packages
+function update-packages {
+    # Fetch list of available remote hosts
+    mapfile -t REMOTE_HOSTS < <(get-remote-hosts)
+
+    if [ ${#REMOTE_HOSTS[@]} -eq 0 ]; then
+        printf "No remote hosts found in ~/.ssh/config\n"
+        return 1
+    fi
+
+    printf "Select a remote host:\n"
+    select remote_host in "${REMOTE_HOSTS[@]}"; do
+        ssh "$remote_host" "sudo dnf update"
+        break
+    done
+}
+
+# Define function for monitoring system logs
+function monitor-logs {
+    # Fetch list of available remote hosts
+    mapfile -t REMOTE_HOSTS < <(get-remote-hosts)
+
+    if [ ${#REMOTE_HOSTS[@]} -eq 0 ]; then
+        printf "No remote hosts found in ~/.ssh/config\n"
+        return 1
+    fi
+
+    printf "Select a remote host:\n"
+    select remote_host in "${REMOTE_HOSTS[@]}"; do
+        printf "Select a log file to monitor or exit:\n"
+        select log_file in /var/log/messages /var/log/secure /var/log/httpd/access_log /var/log/httpd/error_log /var/log/mysqld.log /var/log/maillog /var/log/cron "Exit"; do
+            case "$log_file" in
+                "Exit")
+                    return
+                    ;;
+                *)
+                    ssh -t "$remote_host" "sudo tail -f $log_file"
+                    break
+                    ;;
+            esac
+        done
+    done
+}
+
+function backup-files {
+    mapfile -t REMOTE_HOSTS < <(get-remote-hosts)
+
+    if [ ${#REMOTE_HOSTS[@]} -eq 0 ]; then
+        printf "No remote hosts found in ~/.ssh/config\n"
+        return 1
+    fi
+
+    printf "Select a remote host:\n"
+    select remote_host in "${REMOTE_HOSTS[@]}"; do
+        printf "Select an option:\n"
+        select option in "Push files to remote directory" "Pull files from remote directory" "Exit" ; do
+            case "$option" in
+                "Push files to remote directory")
+                    if command -v fzf >/dev/null 2>&1; then
+                        local_source_dir=$(find "$HOME"/ /sdcard/ -maxdepth 1 -type d | sort -f | fzf --reverse)
+                    else
+                        local_source_dir=$(dialog --stdout --title "Select a directory" --dselect "$HOME/" 14 48)
+                    fi
+
+                    exit_status=$?
+                    if [ $exit_status -ne 0 ]; then
+                        printf "Error: Failed to select local directory\n"
+                        return 1
+                    fi
+
+                    temp_file=$(mktemp)
+                    ssh "$remote_host" 'find $HOME/ /media/nowhereman/nowhereman/ -maxdepth 1 -type d' | sort -f > "$temp_file"
+
+                    if command -v fzf >/dev/null 2>&1; then
+                        remote_dest_dir=$(cat "$temp_file" | fzf --reverse)
+                    else
+                        remote_dest_dir=$(dialog --stdout --title "Select a remote directory" --fselect "$temp_file" 14 48)
+                    fi
+
+                    rm "$temp_file"
+
+                    exit_status=$?
+                    if [ $exit_status -ne 0 ]; then
+                        printf "Error: Failed to select remote directory\n"
+                        return 1
+                    fi
+                    if rsync -avz --progress "$local_source_dir" "$remote_host":"$remote_dest_dir"; then
+                        printf "Files pushed successfully\n"
+                    else
+                        printf "Error: Failed to push files\n"
+                        return 1
+                    fi
+                    break
+                    ;;
+
+                "Pull files from remote directory")
+                    temp_file=$(mktemp)
+                    ssh "$remote_host" 'find $HOME/ /media/nowhereman/nowhereman -maxdepth 1 -type d' | sort -f > "$temp_file"
+
+                    if command -v fzf >/dev/null 2>&1; then
+                        remote_source_dir=$(cat "$temp_file" | fzf --reverse)
+                    else
+                        remote_source_dir=$(dialog --stdout --title "Select a remote directory" --fselect "$temp_file" 14 48)
+                    fi
+
+                    rm "$temp_file"
+
+                    exit_status=$?
+                    if [ $exit_status -ne 0 ]; then
+                        printf "Error: Failed to select remote directory\n"
+                        return 1
+                    fi
+
+                    if command -v fzf >/dev/null 2>&1; then
+                        local_dest_dir=$(find "$HOME"/ /sdcard/ -maxdepth 1 -type d | sort -f | fzf --reverse)
+                    else
+                        local_dest_dir=$(dialog --stdout --title "Select a directory" --dselect "$HOME/" 14 48)
+                    fi
+
+                    exit_status=$?
+                    if [ $exit_status -ne 0 ]; then
+                        printf "Error: Failed to select local directory\n"
+                        return 1
+                    fi
+
+                    if rsync -avz --progress "$remote_host":"$remote_source_dir" "$local_dest_dir"; then
+                        printf "Files pulled successfully\n"
+                    else
+                        printf "Error: Failed to pull files\n"
+                        return 1
+                    fi
+                    break
+                    ;;
+		"Exit")
+		    break
+		    ;;
+                *)
+                    printf "Invalid option. Please select a valid option.\n"
+                    ;;
+            esac
+        done
+        break
+    done
+}
+
+# Define function for adjusting sound with alsamixer on a remote system
+function adjust-sound {
+    # Fetch list of available remote hosts
+    mapfile -t REMOTE_HOSTS < <(get-remote-hosts)
+
+    if [ ${#REMOTE_HOSTS[@]} -eq 0 ]; then
+        printf "No remote hosts found in ~/.ssh/config\n"
+        return 1
+    fi
+
+    printf "Select a remote host:\n"
+    select remote_host in "${REMOTE_HOSTS[@]}"; do
+        printf "Adjusting sound with alsamixer on remote host %s. Press 'Esc' to exit.\n" "$remote_host"
+        ssh -t "$remote_host" "alsamixer"
+        break
+    done
+}
+
+# Define function for running youtube-toggle on area-51
+function run-youtube-toggle {
+    # Check if area-51 is in the list of remote hosts
+    if get-remote-hosts | grep -q '^area-51$'; then
+        printf "Running youtube-toggle script on area-51\n"
+        ssh "area-51" "youtube-toggle ; sleep 1 ; killall chrome ; sleep 1 ; systemd-run --user google-chrome youtube.com"
+    else
+        printf "Remote host 'area-51' not found in ~/.ssh/config\n"
+        return 1
+    fi
+}
+
+function run-sat-script {
+    # Check if area-51 is in the list of remote hosts                                                                                                      if get-remote-hosts | grep -q '^area-51$'; then
+    if get-remote-hosts | grep -q '^area-51$'; then
+        printf "Running sat.sh on area-51\n"
+        ssh "area-51" "sat.sh > /dev/null 2>&1 &"
+    else
+        printf "Remote host 'area-51' not found in ~/.ssh/config\n"
+        return 1
+    fi
+}
+
+
+# Define function for rebooting or shutting down a remote system
+function reboot_or_shutdown {
+    # Fetch list of available remote hosts
+    mapfile -t REMOTE_HOSTS < <(get-remote-hosts)
+
+    if [ ${#REMOTE_HOSTS[@]} -eq 0 ]; then
+        printf "No remote hosts found in ~/.ssh/config\n"
+        return 1
+    fi
+
+    printf "Select a remote host:\n"
+    select remote_host in "${REMOTE_HOSTS[@]}"; do
+        printf "Select an action for remote host %s:\n" "$remote_host"
+        select action in "Reboot" "Shutdown"; do
+            case "$action" in
+                "Reboot")
+                    printf "Rebooting %s...\n" "$remote_host"
+                    ssh "$remote_host" "sudo reboot"
+                    break
+                    ;;
+                "Shutdown")
+                    printf "Shutting down %s...\n" "$remote_host"
+                    ssh "$remote_host" "sudo poweroff"
+                    break
+                    ;;
+                *)
+                    printf "Invalid option. Please select a valid option.\n"
+                    ;;
+            esac
+        done
+        break
+    done
+}
+
+PS3="𝝅) "
+
+# Loop until user exits
+while true; do
+    # Display menu options
+    printf "Select an option:\n"
+    select option in "${OPTIONS[@]}"; do
+        case "$option" in
+            "Connect to remote Fedora system")
+                connect-to-remote-system
+                break
+                ;;
+            "Update all installed packages")
+                update-packages
+                break
+                ;;
+            "Monitor system logs")
+                monitor-logs
+                break
+                ;;
+            "Backup important files")
+                backup-files
+                break
+                ;;
+            "Adjust sound with alsamixer")
+                adjust-sound
+                break
+                ;;
+            "Run youtube-toggle on area-51")
+                run-youtube-toggle
+                break
+                ;;
+	    "Run sat.sh on area-51")
+		run-sat-script
+                break
+		;;
+            "Reboot or shutdown remote system")
+                reboot_or_shutdown
+                break
+                ;;
+            "Exit")
+                exit
+                ;;
+            *)
+                printf "Invalid option. Please select a valid option.\n"
+                ;;
+        esac
+    done
+done
