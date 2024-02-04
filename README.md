@@ -1,6 +1,6 @@
 # Termux Remote Management Script
 
-Script requires your ~/.ssh/config to be setup and pubkey auth for best results. Also install the Termux: Widget app to allow for easier access to your scripts from Launcher's home screen
+Script requires your ~/.ssh/config and pubkey auth to be setup for best results. Also requires rsync to run the backup option. Additionally, install the [Termux: Widget](https://f-droid.org/repo/com.termux.widget_13.apk) app to allow for easier access to your scripts from Launcher's home screen
 
 This script is a versatile tool for managing remote Linux systems using Termux on your Android device. It provides a menu-driven interface with various options to simplify common administrative tasks.
 
@@ -28,7 +28,7 @@ This script is a versatile tool for managing remote Linux systems using Termux o
 
 - Uses various commands like ssh, rsync, alsamixer, and more to accomplish different tasks.
 
-### How to Use:
+### How to Use from within Termux:
 1. Copy the script to your Termux environment, e.g. ~/.shortcuts/admin.
 
 2. Make it executable: `chmod +x ~/.shortcuts/admin`
@@ -36,5 +36,16 @@ This script is a versatile tool for managing remote Linux systems using Termux o
 3. Run the script: `~/.shortcuts/admin`
 
 4. Follow the on-screen menu to perform desired actions on your remote Linux systems.
+
+### How to Use from Termux:Widget:
+1. Copy the script to your Termux environment, e.g. ~/.shortcuts/admin.
+
+2. Make it executable: `chmod +x ~/.shortcuts/admin`
+
+3. Long-press the home screen > add widget > Termux:Widget > Termux shortcut > drag to Launcher home > select admin
+
+4. Click admin shortcut
+
+5. Follow the on-screen menu to perform desired actions on your remote Linux systems.
 
 Feel free to customize and extend the script according to your needs. Contributions and suggestions are welcome!
