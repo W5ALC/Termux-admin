@@ -1,6 +1,6 @@
 # Termux Remote Management Script
 
-Script requires your ~/.ssh/config and pubkey auth to be setup for best results. Also requires rsync to run the backup option. Additionally, install the [Termux: Widget](https://f-droid.org/repo/com.termux.widget_13.apk) app to allow for easier access to your scripts from Launcher's home screen
+Script        **requires**       your       **~/.ssh/config**       and pubkey auth to be setup for best results. Also requires rsync to run the backup option. Additionally, install the [Termux: Widget](https://f-droid.org/repo/com.termux.widget_13.apk) app to allow for easier access to your scripts from Launcher's home screen
 
 This script is a versatile tool for managing remote Linux systems using Termux on your Android device. It provides a menu-driven interface with various options to simplify common administrative tasks.
 
