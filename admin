@@ -59,7 +59,11 @@ get_package_manager() {
 install_package() {
     local selected_host="$1"
     local pm="$2"
+if [[ $pm == "pacman" ]] ; then
+    execute_remote_command "$selected_host" "sudo $pm -S \"$3\""
+else
     execute_remote_command "$selected_host" "sudo $pm install \"$3\""
+fi
 }
 
 # Function to remove packages on the remote system
