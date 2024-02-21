@@ -59,18 +59,40 @@ get_package_manager() {
 install_package() {
     local selected_host="$1"
     local pm="$2"
-if [[ $pm == "pacman" ]] ; then
-    execute_remote_command "$selected_host" "sudo $pm -S \"$3\""
-else
-    execute_remote_command "$selected_host" "sudo $pm install \"$3\""
-fi
+    case $pm in
+        "apt")
+            execute_remote_command "$selected_host" "sudo apt install \"$3\""
+            ;;
+        "pacman")
+            execute_remote_command "$selected_host" "sudo pacman -S \"$3\""
+            ;;
+        "dnf")
+            execute_remote_command "$selected_host" "sudo dnf install \"$3\""
+            ;;
+        "zypper")
+            execute_remote_command "$selected_host" "sudo zypper install \"$3\""
+            ;;
+    esac
 }
 
 # Function to remove packages on the remote system
 remove_package() {
     local selected_host="$1"
     local pm="$2"
-    execute_remote_command "$selected_host" "sudo $pm remove \"$3\""
+    case $pm in
+        "apt")
+            execute_remote_command "$selected_host" "sudo apt remove \"$3\""
+            ;;
+        "pacman")
+            execute_remote_command "$selected_host" "sudo pacman -Rncs \"$3\""
+            ;;
+        "dnf")
+            execute_remote_command "$selected_host" "sudo dnf remove \"$3\""
+            ;;
+        "zypper")
+            execute_remote_command "$selected_host" "sudo zypper remove \"$3\""
+            ;;
+    esac
 }
 
 # Function to search for packages on the remote system
@@ -97,6 +119,20 @@ search_package() {
 update_packages() {
     local selected_host="$1"
     local pm="$2"
+    case $pm in
+        "apt")
+            execute_remote_command "$selected_host" "sudo apt update && sudo apt upgrade"
+            ;;
+        "pacman")
+            execute_remote_command "$selected_host" "sudo pacman -Syu"
+            ;;
+        "dnf")
+            execute_remote_command "$selected_host" "sudo dnf update"
+            ;;
+        "zypper")
+            execute_remote_command "$selected_host" "sudo zypper dup"
+            ;;
+    esac
     execute_remote_command "$selected_host" "sudo $pm update"
 }
 
